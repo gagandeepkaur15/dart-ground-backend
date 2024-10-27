@@ -9,11 +9,7 @@ Future<Response> onRequest(RequestContext context) async {
   final body = await context.request.body();
   final code = body;
 
-  print("Received code: $code");
-
   final result = await _runCodeInIsolate(code);
-
-  print("Result from isolate: $result");
 
   return Response.json(body: {'result': result});
 }
@@ -32,19 +28,13 @@ Future<void> _isolateRunner(List<dynamic> args) async {
   final sendPort = args[0] as SendPort;
   final code = args[1] as String;
 
-  print("Isolate running code: $code");
-
   try {
     final tempFile = await _createTempDartFile(code);
     final result = await _runDartCode(tempFile);
     await tempFile.delete();
 
-    print("Execution result: $result");
-
     sendPort.send(result);
-  } catch (e, stacktrace) {
-    print('Error in isolate execution: $e');
-    print('Stacktrace: $stacktrace');
+  } catch (e) {
     sendPort.send({
       'output': 'Error: $e',
       'executionTime': null,
